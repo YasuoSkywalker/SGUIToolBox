@@ -574,7 +574,7 @@ MonoBehaviour:
   m_enableKerning: 1
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
-  m_isRichText: 1
+  m_isRichText: 0
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -631,11 +631,17 @@ MonoBehaviour:
   typeStartIndex: 0
   typeEndIndex: 0
   typeSpace: 0.2
-  useBiggerEffect: 1
+  useBiggerEffect: 0
   applyBiggerToAllText: 0
   biggerStartIndex: 0
   biggerEndIndex: 3
-  biggerRate: 2.5
+  biggerRate: 2
+  useRotateEffect: 1
+  applyRotateToAllText: 0
+  rotateStartIndex: 8
+  rotateEndIndex: 9
+  rotationAngle: 45
+  rotationSpeed: 0.05
 --- !u!1 &1827100960
 GameObject:
   m_ObjectHideFlags: 0
