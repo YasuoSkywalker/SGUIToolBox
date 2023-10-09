@@ -574,7 +574,7 @@ MonoBehaviour:
   m_enableKerning: 1
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
-  m_isRichText: 0
+  m_isRichText: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -626,15 +626,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16baecf61de4ec44b87c737aaba4eebb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  useTypeEffect: 0
-  applyTypeToAllText: 0
+  useTypeEffect: 1
+  applyTypeToAllText: 1
   typeStartIndex: 0
-  typeEndIndex: 0
+  typeEndIndex: 3
   typeSpace: 0.2
-  useBiggerEffect: 0
+  useBiggerEffect: 1
   applyBiggerToAllText: 0
   biggerStartIndex: 0
-  biggerEndIndex: 3
+  biggerEndIndex: 0
   biggerRate: 2
   useRotateEffect: 1
   applyRotateToAllText: 0
@@ -642,6 +642,15 @@ MonoBehaviour:
   rotateEndIndex: 9
   rotationAngle: 45
   rotationSpeed: 0.05
+  useColorEffect: 1
+  applyColorToAllText: 1
+  colorStartIndex: 0
+  colorEndIndex: 0
+  baseColor:
+    serializedVersion: 2
+    rgba: 4282902486
+  randomState: 6.5
+  useTotallyRandom: 0
 --- !u!1 &1827100960
 GameObject:
   m_ObjectHideFlags: 0

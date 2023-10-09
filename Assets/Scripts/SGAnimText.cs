@@ -5,7 +5,6 @@ using TMPro;
 using UnityEngine;
 
 //TODO:字体放大效果改为使用textInfo.characterInfo[i].pointSize修改
-//TODO:添加更多的效果
 [RequireComponent(typeof(TextMeshProUGUI))]
 public class SGAnimText : MonoBehaviour
 {
@@ -33,7 +32,7 @@ public class SGAnimText : MonoBehaviour
     [Header("打字间隔")]
     private float typeSpace = 0.2f;
     #endregion
-
+    [Header("------")]
     #region 放大效果
     [SerializeField]
     [Header("使用放大效果")]
@@ -53,10 +52,10 @@ public class SGAnimText : MonoBehaviour
     [Min(0f)]
     private float biggerRate = 1.2f;
     #endregion
-
+    [Header("------")]
     #region 绕中心点摆动效果
     [SerializeField]
-    [Header("使用旋转效果")]
+    [Header("使用摆动效果")]
     [Tooltip("勾选后，会将设定范围内的字符绕字符中心点摆动")]
     private bool useRotateEffect = false;
     [SerializeField]
@@ -77,6 +76,32 @@ public class SGAnimText : MonoBehaviour
     [Range(0f, 1f)]
     private float rotationSpeed = 1f;
     #endregion
+    [Header("------")]
+    #region 字符颜色效果
+    [SerializeField]
+    [Header("是否使用颜色效果")]
+    [Tooltip("勾选后，将会对选定范围内的字符使用颜色效果")]
+    private bool useColorEffect = false;
+    [SerializeField]
+    [Header("是否对全部文本生效")]
+    private bool applyColorToAllText = false;
+    [SerializeField]
+    [Header("颜色效果生效的起始位置")]
+    private int colorStartIndex = 0;
+    [SerializeField]
+    [Header("颜色效果生效的结束位置")]
+    private int colorEndIndex = 0;
+    [SerializeField]
+    [Header("基底颜色")]
+    private Color32 baseColor = Color.white;
+    [SerializeField]
+    [Header("摆动幅度"), Tooltip("实际颜色与基底颜色的差异程度")]
+    [Range(0, 10)]
+    private float randomState = 0f;
+    [SerializeField]
+    [Header("是否完全随机颜色")]
+    private bool useTotallyRandom = false;
+    #endregion
 
     private void Awake()
     {
@@ -92,6 +117,7 @@ public class SGAnimText : MonoBehaviour
             HandleTypeEffect();
             HandleBiggerEffect();
             HandleRotateEffect();
+            HandleColorEffect();
             isExecuted = true;
         }
     }
@@ -101,18 +127,17 @@ public class SGAnimText : MonoBehaviour
     /// </summary>
     private void HandleTypeEffect()
     {
-        if (!useTypeEffect) return;
+        if (!useTypeEffect) return; 
         //如果勾选了对所有文字生效
-        if(applyTypeToAllText)
+        if (applyTypeToAllText)
         {
             //先清空TMP的text
-            tmpUGUI.text = "";
+            //tmpUGUI.text = "";
             //将整段文字传入处理打字效果的协程函数中
-            StartCoroutine(TypeEffectCoroutine(tmpUGUIText));
+            StartCoroutine(TypeEffectCoroutine(0,tmpUGUI.textInfo.characterCount-1));
         }
         else
         {
-            tmpUGUI.text = "";
             //数据正确性检查
             if(typeStartIndex >= tmpUGUIText.Length || typeStartIndex < 0)
             {
@@ -129,14 +154,8 @@ public class SGAnimText : MonoBehaviour
                 Debug.LogError("typeEndIndex must larger than typeStartIndex");
                 return;
             }
-            //打字效果之前部分
-            tmpUGUI.text += tmpUGUIText.Substring(0, typeStartIndex);
-            //打字效果，onFinish传入打字效果之后部分
-            StartCoroutine(TypeEffectCoroutine(tmpUGUIText.Substring(typeStartIndex, typeEndIndex - typeStartIndex + 1),
-                ()=> {
-                    if(typeEndIndex+1 < tmpUGUIText.Length)
-                        tmpUGUI.text += tmpUGUIText.Substring(typeEndIndex + 1, tmpUGUIText.Length - typeEndIndex-1);
-                }));
+            //打字效果
+            StartCoroutine(TypeEffectCoroutine(typeStartIndex, typeEndIndex));
         }
     }
 
@@ -146,15 +165,49 @@ public class SGAnimText : MonoBehaviour
     /// <param name="text"></param>
     /// <param name="onFinish"></param>
     /// <returns></returns>
-    IEnumerator TypeEffectCoroutine(string text,Action onFinish = null)
+    IEnumerator TypeEffectCoroutine(int startIndex, int endIndex, Action onFinish = null)
     {
-        int index = 0;
-        //逐个输出文字
-        while(index < text.Length)
+        TMP_TextInfo textInfo = tmpUGUI.textInfo;  //获取textInfo引用
+        int count = tmpUGUI.textInfo.characterCount; //获取所有字符
+        int totalTypeCount = endIndex - startIndex + 1; //需要应用打字效果的字符总数
+        int currentTypeCount = 0;  //当前已经应用打字效果的字符总数
+
+        while (currentTypeCount <= totalTypeCount)
         {
-            tmpUGUI.text += text[index++];
+            //对所有字符进行操作
+            for (int i = 0; i < count; i++)
+            {
+                int materialIndex = textInfo.characterInfo[i].materialReferenceIndex;
+                int vertexIndex = textInfo.characterInfo[i].vertexIndex;
+                Color32[] vertexColors = textInfo.meshInfo[materialIndex].colors32;
+
+                if (char.IsWhiteSpace(textInfo.characterInfo[i].character)) continue; 
+
+                //如果不在范围内，字符可见
+                if (i<startIndex+currentTypeCount || i>endIndex)
+                {
+                    vertexColors[vertexIndex + 0] = new Color32(vertexColors[vertexIndex + 0].r, vertexColors[vertexIndex + 0].g, vertexColors[vertexIndex + 0].b, 255);
+                    vertexColors[vertexIndex + 1] = new Color32(vertexColors[vertexIndex + 1].r, vertexColors[vertexIndex + 1].g, vertexColors[vertexIndex + 1].b, 255);
+                    vertexColors[vertexIndex + 2] = new Color32(vertexColors[vertexIndex + 2].r, vertexColors[vertexIndex + 2].g, vertexColors[vertexIndex + 2].b, 255);
+                    vertexColors[vertexIndex + 3] = new Color32(vertexColors[vertexIndex + 3].r, vertexColors[vertexIndex + 3].g, vertexColors[vertexIndex + 3].b, 255);
+                    
+                }
+                else
+                {
+                    vertexColors[vertexIndex + 0] = new Color32(vertexColors[vertexIndex + 0].r, vertexColors[vertexIndex + 0].g, vertexColors[vertexIndex + 0].b, 0);
+                    vertexColors[vertexIndex + 1] = new Color32(vertexColors[vertexIndex + 1].r, vertexColors[vertexIndex + 1].g, vertexColors[vertexIndex + 1].b, 0);
+                    vertexColors[vertexIndex + 2] = new Color32(vertexColors[vertexIndex + 2].r, vertexColors[vertexIndex + 2].g, vertexColors[vertexIndex + 2].b, 0);
+                    vertexColors[vertexIndex + 3] = new Color32(vertexColors[vertexIndex + 3].r, vertexColors[vertexIndex + 3].g, vertexColors[vertexIndex + 3].b, 0);
+                    
+                }
+                
+            }
+
+            tmpUGUI.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
+            currentTypeCount++;
             yield return new WaitForSeconds(typeSpace);
         }
+
         //打字效果结束后，调用onFinish Action，记得判空
         onFinish?.Invoke();
     }
@@ -187,17 +240,15 @@ public class SGAnimText : MonoBehaviour
                 Debug.LogError("biggerEndIndex must larger than biggerStartIndex");
                 return;
             }
-            /*tmpUGUI.ForceMeshUpdate();
-            for (int i = biggerStartIndex; i <= biggerEndIndex; i++)
+            /*for (int i = biggerStartIndex; i <= biggerEndIndex; i++)
             {
                 tmpUGUI.textInfo.characterInfo[i].pointSize = tmpUGUI.textInfo.characterInfo[i].pointSize * biggerRate;
             }
+
             string originalText = tmpUGUI.text;
             tmpUGUI.text = "";
-            tmpUGUI.text = originalText;
-            Debug.Log(tmpUGUI.textInfo.characterInfo[0].pointSize);
-            tmpUGUI.ForceMeshUpdate();
-            Debug.Log(tmpUGUI.textInfo.characterInfo[0].pointSize);*/
+            tmpUGUI.text = originalText;*/
+
             //根据规则生成带有富文本的字符串
             float size = tmpUGUI.fontSize * biggerRate;
             string effectText = "";
@@ -216,7 +267,6 @@ public class SGAnimText : MonoBehaviour
             //应用字符串
             tmpUGUIText = effectText;
             tmpUGUI.text = effectText;
-            Debug.Log(tmpUGUI.textInfo.characterInfo[0].pointSize);
         }
     }
 
@@ -273,10 +323,10 @@ public class SGAnimText : MonoBehaviour
             //对于选定区域的字符应用旋转
             for (int i = startIndex; i <= endIndex; i++)
             {
-                TMP_CharacterInfo charInfo = textInfo.characterInfo[i];
+                /*TMP_CharacterInfo charInfo = textInfo.characterInfo[i];
 
                 // 如果字符不可见，跳过
-                if (!charInfo.isVisible) continue;
+                if (!charInfo.isVisible) continue;*/
 
                 // 获取当前字符的materialIndex
                 int materialIndex = textInfo.characterInfo[i].materialReferenceIndex;
@@ -322,6 +372,81 @@ public class SGAnimText : MonoBehaviour
             if (currentRotate >= rotationAngle || currentRotate <= -rotationAngle) rotateDir *= -1;
             
             yield return new WaitForFixedUpdate();
+        }
+    }
+
+    /// <summary>
+    /// 处理颜色效果
+    /// </summary>
+    private void HandleColorEffect()
+    {
+        if (!useColorEffect) return;
+        //如果勾选了全部生效
+        if(applyColorToAllText)
+        {
+            StartCoroutine(ColorEffectCoroutine(0, tmpUGUI.textInfo.characterCount - 1));
+        }
+        else
+        {
+            StartCoroutine(ColorEffectCoroutine(colorStartIndex, colorEndIndex));
+        }
+    }
+
+    /// <summary>
+    /// 处理颜色协程
+    /// </summary>
+    /// <param name="startIndex"></param>
+    /// <param name="endIndex"></param>
+    /// <returns></returns>
+    IEnumerator ColorEffectCoroutine(int startIndex,int endIndex)
+    {
+        TMP_TextInfo textInfo = tmpUGUI.textInfo;  //获取textInfo引用
+        int count = tmpUGUI.textInfo.characterCount; //获取所有字符
+        Color32 currentColor = baseColor;
+        int currentCharCount = 0;
+        Color32[] newVertexColor;
+
+        while(true)
+        {
+
+            if (currentCharCount < startIndex || currentCharCount > endIndex || char.IsWhiteSpace(textInfo.characterInfo[currentCharCount].character))
+            {
+                currentCharCount = (currentCharCount+1) % count;
+                continue;
+            }
+
+            int materialIndex = textInfo.characterInfo[currentCharCount].materialReferenceIndex;
+            int vertexIndex = textInfo.characterInfo[currentCharCount].vertexIndex;
+            newVertexColor = textInfo.meshInfo[materialIndex].colors32;
+
+            if (useTotallyRandom)
+            {
+                currentColor = new Color32((byte)UnityEngine.Random.Range(0, 255),
+                                           (byte)UnityEngine.Random.Range(0, 255),
+                                           (byte)UnityEngine.Random.Range(0, 255),
+                                           255);
+            }
+            else
+            {
+                byte tempR = (byte)(baseColor.r + randomState * UnityEngine.Random.Range(-5, 5));
+                byte tempG = (byte)(baseColor.g + randomState * UnityEngine.Random.Range(-5, 5));
+                byte tempB = (byte)(baseColor.b + randomState * UnityEngine.Random.Range(-5, 5));
+                tempR = (byte)Mathf.Max(0, Mathf.Min(tempR, 255));
+                tempG = (byte)Mathf.Max(0, Mathf.Min(tempG, 255));
+                tempB = (byte)Mathf.Max(0, Mathf.Min(tempB, 255));
+                currentColor = new Color32(tempR, tempG, tempB, 255);
+            }
+
+            for (int j = 0; j < 4; j++)
+            {
+                byte currentCharA = newVertexColor[vertexIndex + j].a;
+                currentColor.a = currentCharA;
+                newVertexColor[vertexIndex + j] = currentColor;
+            }
+            tmpUGUI.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
+
+            currentCharCount = (currentCharCount+1) % count;
+            yield return new WaitForSeconds(0.05f);
         }
     }
 }
