@@ -39,5 +39,4 @@
 
 - [ ] 为每个Event添加AddListener方法和RemoveListener方法
 - [ ] 按钮分开长按和点击
-- [ ] SGAnimText部分字体放大部分改用`textInfo.characterInfo[i].pointSize`
 - [ ] 为SGAnimText添加部分字体颜色变化、部分字体动画等效果
